@@ -1,0 +1,27 @@
+- name: Configuración inicial del servidor
+  hosts: servidores_casa
+  become: true
+
+  tasks:
+    - name: Actualizar lista de paquetes
+      apt:
+        update_cache: yes
+
+    - name: Instalar paquetes base
+      apt:
+        name:
+          - curl
+          - git
+          - ufw
+          - htop
+        state: present
+
+    - name: Permitir SSH en el firewall
+      ufw:
+        rule: allow
+        port: 22
+
+    - name: Activar firewall
+      ufw:
+        state: enabled
+        policy: deny
