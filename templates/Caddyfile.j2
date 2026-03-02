@@ -1,0 +1,291 @@
+# =============================================================
+# Caddyfile - Generado por Ansible
+# No editar directamente en el servidor
+# Modificar en templates/Caddyfile.j2 y correr el playbook
+# =============================================================
+
+# ── iteravirtus.cl ───────────────────────────────────────────
+iteravirtus.cl, www.iteravirtus.cl {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://iteravirtus.cl; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        -Server
+        -X-Powered-By
+    }
+
+    log {
+        output file /var/log/caddy/iteravirtus_access.log {
+            roll_size 10mb
+            roll_keep 10
+        }
+        level info
+    }
+
+    @frontend {
+        not path /api/*
+        not path /admin/*
+        not path /static/*
+    }
+    reverse_proxy @frontend {{ iteravirtus_ip }}:5173 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    reverse_proxy /api/* {{ iteravirtus_ip }}:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    reverse_proxy /admin/* {{ iteravirtus_ip }}:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    reverse_proxy /static/* {{ iteravirtus_ip }}:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# ── ento.cl ──────────────────────────────────────────────────
+www.ento.cl {
+    redir https://ento.cl{uri}
+}
+
+ento.cl {
+    reverse_proxy {{ ento_ip }}:3000
+
+    log {
+        output file /var/log/caddy/ento_cl.log
+    }
+}
+
+# ── cicpol.synatrix.io ───────────────────────────────────────
+cicpol.synatrix.io {
+    encode zstd gzip
+
+    handle /live/*/whip {
+        reverse_proxy {{ cicpol_ip }}:8889
+    }
+    handle /live/*/whep {
+        reverse_proxy {{ cicpol_ip }}:8889
+    }
+
+    handle /stream/* {
+        uri strip_prefix /stream
+        reverse_proxy {{ cicpol_ip }}:8888
+    }
+
+    handle_path /voice/* {
+        reverse_proxy {{ cicpol_ip }}:8089 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            flush_interval -1
+        }
+    }
+
+    handle_path /tak-bridge/* {
+        reverse_proxy {{ cicpol_ip }}:8200
+    }
+
+    handle_path /api/tak/* {
+        reverse_proxy {{ cicpol_ip }}:8200
+    }
+
+    handle_path /matomo/* {
+        reverse_proxy {{ cicpol_ip }}:8081
+    }
+
+    handle /api* {
+        reverse_proxy {{ cicpol_ip }}:8085
+    }
+
+    @mumbleWS {
+        header Connection *Upgrade*
+        header Upgrade websocket
+        not path /live/*
+        not path /stream/*
+    }
+    handle @mumbleWS {
+        reverse_proxy {{ cicpol_ip }}:8089 {
+            flush_interval -1
+            transport http {
+                read_timeout 0
+                write_timeout 0
+            }
+        }
+    }
+
+    handle {
+        reverse_proxy {{ cicpol_ip }}:3030
+    }
+
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/cicpol_synatrix.log
+    }
+}
+
+# ── tak.cicpol.synatrix.io ───────────────────────────────────
+tak.cicpol.synatrix.io {
+    encode zstd gzip
+
+    reverse_proxy {{ cicpol_ip }}:8443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+
+    log {
+        output file /var/log/caddy/tak_cicpol.log
+    }
+}
+
+# ── verintia.com ─────────────────────────────────────────────
+verintia.com, www.verintia.com {
+    reverse_proxy {{ verintia_ip }}:80
+}
+
+# ── Sitios temporalmente desactivados ────────────────────────
+{% if plusultra_activo %}
+plusultra98.cl, www.plusultra98.cl {
+    encode zstd gzip
+
+    log {
+        output file /var/log/caddy/plusultra98_access.log {
+            roll_size 10mb
+            roll_keep 10
+        }
+        level info
+    }
+
+    handle /api/* {
+        reverse_proxy {{ plusultra_ip }}:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /admin/* {
+        reverse_proxy {{ plusultra_ip }}:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /static/* {
+        reverse_proxy {{ plusultra_ip }}:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /media/* {
+        reverse_proxy {{ plusultra_ip }}:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle {
+        reverse_proxy {{ plusultra_ip }}:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        -Server
+        -X-Powered-By
+    }
+}
+
+sitioprueba.plusultra98.cl {
+    encode zstd gzip
+
+    log {
+        output file /var/log/caddy/plusultra_access.log {
+            roll_size 10mb
+            roll_keep 10
+        }
+        level info
+    }
+
+    handle /api/* {
+        reverse_proxy {{ sitioprueba_ip }}:8081 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            transport http {
+                read_timeout 300s
+                write_timeout 300s
+            }
+        }
+    }
+
+    handle /auth/* {
+        reverse_proxy {{ sitioprueba_ip }}:8081 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle {
+        reverse_proxy {{ sitioprueba_ip }}:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+        -X-Powered-By
+    }
+}
+
+deploy.plusultra98.cl {
+    reverse_proxy {{ sitioprueba_ip }}:9000
+}
+{% endif %}

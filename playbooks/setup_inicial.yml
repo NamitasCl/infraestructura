@@ -1,27 +1,54 @@
-- name: Configuración inicial del servidor
+---
+- name: Instalar Docker oficial
   hosts: servidores_casa
   become: true
 
   tasks:
-    - name: Actualizar lista de paquetes
-      apt:
-        update_cache: yes
-
-    - name: Instalar paquetes base
+    - name: Instalar dependencias previas
       apt:
         name:
+          - ca-certificates
           - curl
-          - git
-          - ufw
-          - htop
+          - gnupg
         state: present
+        update_cache: yes
 
-    - name: Permitir SSH en el firewall
-      ufw:
-        rule: allow
-        port: 22
+    - name: Crear directorio para llaves GPG
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
 
-    - name: Activar firewall
-      ufw:
-        state: enabled
-        policy: deny
+    - name: Descargar llave GPG de Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Agregar repositorio oficial de Docker
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+        filename: docker
+
+    - name: Instalar Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Iniciar y habilitar Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Agregar usuario deploy al grupo docker
+      user:
+        name: deploy
+        groups: docker
+        append: yes

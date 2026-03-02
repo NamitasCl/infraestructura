@@ -1,0 +1,381 @@
+# The Caddyfile is an easy way to configure your Caddy web server.
+#
+# Unless the file starts with a global options block, the first
+# uncommented line is always the address of your site.
+#
+# To use your own domain name (with automatic HTTPS), first make
+# sure your domain's A/AAAA DNS records are properly pointed to
+# this machine's public IP, then replace ":80" below with your
+# domain name.
+
+:80 {
+	# Set this path to your site's directory.
+	root * /usr/share/caddy
+
+	# Enable the static file server.
+	file_server
+
+	# Another common task is to set up a reverse proxy:
+	# reverse_proxy localhost:8080
+
+	# Or serve a PHP site through php-fpm:
+	# php_fastcgi localhost:9000
+}
+
+# Refer to the Caddy docs for more information:
+# https://caddyserver.com/docs/caddyfile
+
+vpn.concreta.online {
+	encode zstd gzip
+
+	# gRPC de Headscale (h2c sin TLS hacia localhost)
+	@grpc {
+		header Content-Type *application/grpc*
+	}
+	reverse_proxy @grpc 127.0.0.1:50443 {
+		transport http {
+			versions h2c
+		}
+	}
+
+	# REST/UI/DERP HTTP/WS
+	reverse_proxy 127.0.0.1:8080
+}
+
+git.concreta.online {
+	encode zstd gzip
+	# Cambia IP:PUERTO por la IP interna de tu VM GitLab
+	# Si instalaste Omnibus por defecto, GitLab escucha en 80
+
+	reverse_proxy 192.168.100.185:3000
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+plusultra98.cl, www.plusultra98.cl {
+	encode zstd gzip
+
+	log {
+		output file /var/log/caddy/plusultra98_access.log {
+			roll_size 10mb
+			roll_keep 10
+		}
+		level info
+	}
+
+	# API Backend (Django/Gunicorn)
+	handle /api/* {
+		reverse_proxy 192.168.100.192:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	handle /admin/* {
+		reverse_proxy 192.168.100.192:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	handle /static/* {
+		reverse_proxy 192.168.100.192:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	handle /media/* {
+		reverse_proxy 192.168.100.192:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Frontend (React/Nginx) - todo lo demás
+	handle {
+		reverse_proxy 192.168.100.192:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		-Server
+		-X-Powered-By
+	}
+}
+
+sitioprueba.plusultra98.cl {
+	# Compresión
+	encode zstd gzip
+
+	# Logging
+	log {
+		output file /var/log/caddy/plusultra_access.log {
+			roll_size 10mb
+			roll_keep 10
+		}
+		level info
+	}
+
+	# API Backend (Spring Boot)
+	handle /api/* {
+		reverse_proxy 192.168.100.205:8081 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+
+			# Timeouts para uploads
+			transport http {
+				read_timeout 300s
+				write_timeout 300s
+			}
+		}
+	}
+
+	handle /auth/* {
+		reverse_proxy 192.168.100.205:8081 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Frontend (React + Nginx)
+	handle {
+		reverse_proxy 192.168.100.205:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Security headers
+	header {
+		# Seguridad
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# HSTS (solo en producción con HTTPS)
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+		# Eliminar headers que revelan info del servidor
+		-Server
+		-X-Powered-By
+	}
+}
+
+deploy.plusultra98.cl {
+	reverse_proxy 192.168.100.205:9000
+}
+
+iteravirtus.cl, www.iteravirtus.cl {
+	encode zstd gzip
+	# Headers de seguridad
+	header {
+		# HSTS
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+		# XSS Protection
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+
+		# Referrer Policy
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# Permissions Policy
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+		# Content Security Policy
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://iteravirtus.cl; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+		# Remover headers que revelan información
+		-Server
+		-X-Powered-By
+	}
+	log {
+		output file /var/log/caddy/iteravirtus_access.log {
+			roll_size 10mb
+			roll_keep 10
+		}
+		level info
+	}
+
+	# Frontend (React/Vite)
+	@frontend {
+		not path /api/*
+		not path /admin/*
+		not path /static/*
+	}
+	reverse_proxy @frontend 192.168.100.183:5173 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# Backend (Django API y Admin)
+	reverse_proxy /api/* 192.168.100.183:8000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	reverse_proxy /admin/* 192.168.100.183:8000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	reverse_proxy /static/* 192.168.100.183:8000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+# Redirección de www a ento.cl
+www.ento.cl {
+	redir https://ento.cl{uri}
+}
+
+# Sitio principal ento.cl
+ento.cl {
+	# Proxy hacia tu VPS en Proxmox a través del túnel
+	# Asegúrate de que el puerto (80) sea el que usa tu sitio internamente
+	reverse_proxy 192.168.100.213:3000
+
+	# Opcional: Recomendado para ver errores específicos de este sitio
+	log {
+		output file /var/log/caddy/ento_cl.log
+	}
+}
+
+# Sitio principal cicpol.synatrix.io
+cicpol.synatrix.io {
+	encode zstd gzip
+        # ═══ STREAMING VIDEO ═══
+        # ═══ WebRTC WHIP/WHEP (PRIMERO - antes del catch-all) ═══
+        handle /live/*/whip {
+                reverse_proxy 192.168.100.213:8889
+        }
+        handle /live/*/whep {
+                reverse_proxy 192.168.100.213:8889
+        }
+        # ═══ HLS Viewer ═══
+        handle /stream/* {
+                uri strip_prefix /stream
+                reverse_proxy 192.168.100.213:8888
+        }
+        # ═══ VOZ TÁCTICA (MUMBLE-WEB PROXY WEBRTC) ═══
+        handle_path /voice/* {
+                reverse_proxy 192.168.100.213:8089 {
+                        header_up Host {host}
+                        header_up X-Real-IP {remote_host}
+                        flush_interval -1
+                }
+        }
+
+        # ═══ TAK BRIDGE ═══
+        # Enviar tráfico /tak-bridge/ directo a Django (Puerto 8200)
+        handle_path /tak-bridge/* {
+                reverse_proxy 192.168.100.213:8200
+        }
+        # También forzar /api/tak/* a Django, por si acaso usamos las rutas viejas
+        handle_path /api/tak/* {
+                reverse_proxy 192.168.100.213:8200
+        }
+        # ------------------------
+
+	# 1. Matomo Analytics (Puerto 8081)
+	handle_path /matomo/* {
+		reverse_proxy 192.168.100.213:8081
+	}
+
+	# 2. API Backend (Spring Boot - Puerto 8085)
+	handle /api* {
+		reverse_proxy 192.168.100.213:8085
+	}
+
+        # WebSocket para Mumble Voice Chat (debe ir ANTES del catch-all frontend
+        @mumbleWS {
+           header Connection *Upgrade*
+           header Upgrade websocket
+           not path /live/*
+           not path /stream/*
+        }
+        handle @mumbleWS {
+           reverse_proxy 192.168.100.213:8089 {
+                   flush_interval -1
+                   transport http {
+                           read_timeout 0
+                           write_timeout 0
+                   }
+           }
+        }
+
+	# 3. Frontend (React + Nginx - Puerto 3030)
+	handle {
+		reverse_proxy 192.168.100.213:3030
+	}
+
+	# Headers de seguridad para permitir IFRAMES (Matomo)
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/cicpol_synatrix.log
+	}
+}
+
+# TAK Server Web UI
+tak.cicpol.synatrix.io {
+	encode zstd gzip
+
+	# El UI Web de FreeTAKServer corre en el 8443 con HTTPS auto-generado
+	reverse_proxy 192.168.100.213:8443 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+
+	log {
+		output file /var/log/caddy/tak_cicpol.log
+	}
+}
+
+verintia.com, www.verintia.com {
+    # Proxy to the Application VPS via VPN IP
+    reverse_proxy 192.168.100.219:80 {
+        # Caddy automatically passes Host, X-Real-IP, X-Forwarded-For, and X-Forwarded-Proto
+        # No extra header configuration usually needed
+    }
+}

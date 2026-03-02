@@ -1,0 +1,39 @@
+- name: Configurar Caddy en VPS
+  hosts: vps_publica
+  become: true
+
+  tasks:
+    - name: Instalar Caddy
+      apt:
+        name: caddy
+        state: present
+        update_cache: yes
+
+    - name: Crear directorio de logs
+      file:
+        path: /var/log/caddy
+        state: directory
+        owner: caddy
+        group: caddy
+        mode: "0755"
+
+    - name: Copiar Caddyfile
+      template:
+        src: ../templates/Caddyfile.j2
+        dest: /etc/caddy/Caddyfile
+        owner: caddy
+        group: caddy
+        mode: "0644"
+      notify: Recargar Caddy
+
+    - name: Asegurar que Caddy está corriendo
+      service:
+        name: caddy
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Recargar Caddy
+      service:
+        name: caddy
+        state: reloaded
