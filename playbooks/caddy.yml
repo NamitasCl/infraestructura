@@ -17,6 +17,13 @@
         group: caddy
         mode: "0755"
 
+    - name: Backup del Caddyfile actual
+      copy:
+        src: /etc/caddy/Caddyfile
+        dest: /etc/caddy/Caddyfile.bak.{{ ansible_date_time.date }}
+        remote_src: yes
+      ignore_errors: true
+
     - name: Copiar Caddyfile
       template:
         src: ../templates/Caddyfile.j2
