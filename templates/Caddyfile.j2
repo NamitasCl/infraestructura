@@ -4,8 +4,26 @@
 # Modificar en templates/Caddyfile.j2 y correr el playbook
 # =============================================================
 
+(seguridad) {
+    header {
+        # Obliga a los navegadores a usar siempre HTTPS (HSTS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        
+        # Evita que alguien incruste tu sitio en un <iframe> oculto (Clickjacking)
+        X-Frame-Options "DENY"
+        
+        # Bloquea ataques de inyección donde intentan engañar el tipo de archivo
+        X-Content-Type-Options "nosniff"
+        
+        # Le quita la etiqueta "Caddy" a las respuestas del servidor
+        -Server
+    }
+}
+
 # ── iteravirtus.cl ───────────────────────────────────────────
 iteravirtus.cl, www.iteravirtus.cl {
+    import seguridad
+
     encode zstd gzip
 
     header {
@@ -62,21 +80,9 @@ iteravirtus.cl, www.iteravirtus.cl {
     }
 }
 
-# ── ento.cl ──────────────────────────────────────────────────
-www.ento.cl {
-    redir https://ento.cl{uri}
-}
-
-ento.cl {
-    reverse_proxy {{ ento_ip }}:3000
-
-    log {
-        output file /var/log/caddy/ento_cl.log
-    }
-}
-
 # ── cicpol.synatrix.io ───────────────────────────────────────
 cicpol.synatrix.io {
+    import seguridad
     encode zstd gzip
 
     handle /live/*/whip {
@@ -146,8 +152,10 @@ cicpol.synatrix.io {
     }
 }
 
-# ── tak.cicpol.synatrix.io ───────────────────────────────────
+# ── tak.cicpol.synatrix.io ──────────────────────────────────
 tak.cicpol.synatrix.io {
+    import seguridad
+
     encode zstd gzip
 
     reverse_proxy {{ cicpol_ip }}:8443 {
@@ -163,7 +171,24 @@ tak.cicpol.synatrix.io {
 
 # ── verintia.com ─────────────────────────────────────────────
 verintia.com, www.verintia.com {
+    import seguridad
+
     reverse_proxy {{ verintia_ip }}:80
+}
+
+# ── errors.iteravirtus.cl (GlitchTip) ───────────────────────
+errors.iteravirtus.cl {
+    import seguridad
+
+    reverse_proxy localhost:8001
+
+    log {
+        output file /var/log/caddy/glitchtip_access.log {
+            roll_size 10mb
+            roll_keep 10
+        }
+        level info
+    }
 }
 
 # ── Sitios temporalmente desactivados ────────────────────────

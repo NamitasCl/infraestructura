@@ -1,9 +1,8 @@
 # Usuario de conexión
-ansible_user: root
+ansible_user: enzo
 
 # IPs de las VMs accesibles via WireGuard
 iteravirtus_ip: 192.168.100.183
-ento_ip: 192.168.100.213
 cicpol_ip: 192.168.100.213
 verintia_ip: 192.168.100.219
 

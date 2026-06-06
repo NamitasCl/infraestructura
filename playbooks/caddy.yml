@@ -20,7 +20,7 @@
     - name: Backup del Caddyfile actual
       copy:
         src: /etc/caddy/Caddyfile
-        dest: /etc/caddy/Caddyfile.bak.{{ ansible_date_time.date }}
+        dest: /etc/caddy/Caddyfile.bak.{{ ansible_facts['date_time']['date'] }}
         remote_src: yes
       ignore_errors: true
 
