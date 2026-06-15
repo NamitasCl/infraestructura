@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verintia - Mantenimiento Programado</title>
+    <style>
+        :root {
+            /* Colores base: Puedes ajustar el primary-color al tono exacto del logo de Verintia */
+            --primary-color: #1e293b;
+            --text-color: #475569;
+            --bg-color: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 550px;
+            width: 90%;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            animation: spin 8s linear infinite;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-note {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 0;
+        }
+
+        /* Pequeña animación para el ícono del engranaje */
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Ícono de engranaje (SVG limpio que no requiere imágenes externas) -->
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+            </path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+            </path>
+        </svg>
+
+        <h1>Mantenimiento Programado</h1>
+
+        <p>En <strong>Verintia</strong> estamos realizando labores de actualización y mejoras en nuestra plataforma para
+            brindarte un mejor servicio.</p>
+
+        <p>Estaremos en línea nuevamente en breve. Agradecemos tu paciencia y comprensión.</p>
+
+        <p class="footer-note">&copy; Verintia. Todos los derechos reservados.</p>
+    </div>
+
+</body>
+
+</html>

@@ -1,8 +1,23 @@
 - name: Configurar Caddy en VPS
   hosts: vps_publica
   become: true
+  vars:
+    # Por defecto el sitio está en línea. 
+    # Esta variable la sobreescribiremos desde la consola.
+    modo_mantenimiento: false
 
   tasks:
+    - name: Crear página de mantenimiento
+      file:
+        path: /var/www/html/
+        state: directory
+        mode: "0755"
+
+    - name: Subir pagina HTML de mantenimiento
+      copy:
+        src: ../templates/maintenance.html
+        dest: /var/www/html/maintenance.html
+
     - name: Instalar Caddy
       apt:
         name: caddy

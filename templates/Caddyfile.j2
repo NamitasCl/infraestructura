@@ -171,9 +171,27 @@ tak.cicpol.synatrix.io {
 
 # ── verintia.com ─────────────────────────────────────────────
 verintia.com, www.verintia.com {
-    import seguridad
+    {% if modo_mantenimiento | default(false) %}
+        import seguridad
+        handle {
+            root * /var/www/html
+            rewrite * /maintenance.html
+            file_server
+        }
+    {% else %}
+        import seguridad
+        # 1. Tráfico del Backend (La API)
+        # Cualquier petición que empiece con /api/ se va al puerto 8080 de Spring Boot
+        handle /api/* {
+            reverse_proxy {{ verintia_ip }}:8080
+        }
 
-    reverse_proxy {{ verintia_ip }}:80
+        # 2. Tráfico del Frontend (La Interfaz Web)
+        # Todo el resto de las peticiones caen aquí por defecto y van al puerto 8081
+        handle {
+            reverse_proxy {{ verintia_ip }}:8081
+        }
+    {% endif %}
 }
 
 # ── errors.iteravirtus.cl (GlitchTip) ───────────────────────
